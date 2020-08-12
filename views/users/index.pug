@@ -1,0 +1,11 @@
+form.seach-form(action="/users/search")
+  input(name="name", type="text", placeholder="name")
+  input(type="submit")
+div
+  a(href='/users/create') create
+ul
+  each user in users
+    li
+      p= user.name
+      a(href="/users/"+ user.id) view
+  

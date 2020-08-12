@@ -1,0 +1,14 @@
+extends ../layout/common
+block content
+	if errors
+		each error in errors
+			p= error
+	form(action="/users/create" method="POST")
+		.form-group
+			label(id="name")
+			input(type="text", name="name", value= values?values.name:"")
+			label(id="email")
+			input(type="text", placeholder="Your email address", name="email")
+			label(id="age")
+			input(type="text", placeholder="Your age", name="age")
+			input(type="submit", class="btn btn-primary")
