@@ -6,7 +6,7 @@ block content
 	form(action="/users/create" method="POST")
 		.form-group
 			label(id="name")
-			input(type="text", name="name", value= values?values.name:"")
+			input(type="text", name="name", placeholder="Your name", value= values?values.name:"")
 			label(id="email")
 			input(type="text", placeholder="Your email address", name="email")
 			label(id="age")

@@ -7,6 +7,7 @@ html
         .col-8.offset-2
           .card
             .card-header.bg-primary.text-white.text-uppercase Users
+              a.btn.btn-success(href="/users/login") login
             .card-body
               form.seach-form(action="/users/search")
                 .container
@@ -16,10 +17,6 @@ html
                       .form-group
                         label(for='name') Name
                         input#name.form-control(name="name", type='text')
-                    .col-6
-                      .form-group
-                        label(for='age') Age
-                        input#age.form-control(name="age", type='number')
                     .col-12
                       button.btn.btn-primary(type='submit') Search
 

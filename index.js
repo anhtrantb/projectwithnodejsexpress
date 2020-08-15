@@ -2,6 +2,7 @@
 var controller= require('./controllers/user.controller')
 const express = require('express'); // Require module express vào project
 var cookieParser = require('cookie-parser')//cookie
+var md5 = require('md5'); //ma hoa password
 const app = express(); // Tạo một app mới
 //const shortid = require('shortid');
 const port = 3000; // Định nghĩa cổng để chạy ứng dụng NodeJS của bạn trên server
@@ -51,12 +52,18 @@ app.get('/users/search', (req,res) => {
 	});
 })
 //-------------------------------cookie-------------------------------------
-app.get('/users/cookie',(req,res)=>{
-	res.cookie('name','test');
-	res.send('hello world');
-})
+// app.get('/users/cookie',(req,res)=>{
+// 	res.cookie('name','test');
+// 	res.send('hello world');
+// })
 // //----------------------------phương thức post-------------------------------
-app.get('/users/create',(req,res)=>{
+app.get('/users/create',function(req,res,next){
+	if(!req.cookies.name){
+		res.redirect('/users/login')
+	}
+	next();
+},
+	(req,res)=>{
 	//console.log(req.cookies); đọc cookie đã được nhận
 	res.render('users/create');  
 })
@@ -88,12 +95,52 @@ app.post('/users/create', (req, res, next) => {
 	}
   
 )
+//----------------------login------------------------
+app.get('/users/login',(req,res)=>{
+	res.render('users/login');
+})
+app.post('/users/login',(req,res)=>{
+	var account = req.body.account;//test
+	var password = req.body.password;//1234567890
+	var hashpassword = md5(password);//e807f1fcf82d132f9bb018ca6738a19f
+	var user = db.get('users').find({account:account}).value();
+	if(!user){
+		res.render('users/login',{
+			error:['user not exist']
+		})
+		return ;
+	}
+	if(user.password!==hashpassword){
+		res.render('users/login',{
+			error:['wrong password']
+		})
+		return;
+	}
+	res.cookie('name','test');
+	res.redirect('/users/create')
+
+})
 //----------------------hiển thị chi tiết --------------
 app.get('/users/:id',(req,res)=>{
 	var id = parseInt(req.params.id);
 	var user = db.get('users').find({id:id}).value();
 	res.render('users/view',{
 		user:user
+	})
+})
+//--------------------- tạo trang -------------------
+app.get('/product',(req,res)=>{
+	var page = parseInt(req.query.page) ||1; 
+	var nextPage =page+1; 
+	var prePage = page-1;
+	var perPage = 8;
+	var start = (page-1)*perPage; 
+	var end = page*perPage;
+	res.render('users/product',{
+		products: db.get('product').value().slice(start,end),
+		prePage:prePage,
+		page:page,
+		nextPage:nextPage
 	})
 })
 //---------------------------lắng nghe ở cổng, chạy trên terminal ------------
