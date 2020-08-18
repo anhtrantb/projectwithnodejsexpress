@@ -2,7 +2,17 @@
 var controller= require('./controllers/user.controller')
 const express = require('express'); // Require module express vào project
 var cookieParser = require('cookie-parser')//cookie
+var multer  = require('multer')//upload file 
 var md5 = require('md5'); //ma hoa password
+const mongoose = require('mongoose');
+var Product = require('./models/product.model');
+var User = require('./models/user.model');
+mongoose.connect('mongodb://localhost/express-demo',{
+	useNewUrlParser: true,
+	useUnifiedTopology: true
+});
+//-------------------------------------------------------------------
+var upload = multer({ dest: 'uploads/' })  
 const app = express(); // Tạo một app mới
 //const shortid = require('shortid');
 const port = 3000; // Định nghĩa cổng để chạy ứng dụng NodeJS của bạn trên server
@@ -13,6 +23,7 @@ app.set('view engine', 'pug'); // Sử dụng pug làm view engine
 app.use(express.json()) // for parsing application/json
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())//coookie
+app.use(express.static('public'))
 //--------------------khởi tạo một database đơn giản ---------------
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
@@ -33,23 +44,27 @@ db.defaults({users:[]})
 app.get('/',controller.index)
 //-----------------lấy dữ liệu từ file pug  convert sang html ---------
 app.get('/users', function(req, res){
-	res.render('users/index',{
-		users: db.get('users').value()//lấy dữ liệu từ database 
-	});
-})
+	// res.render('users/index',{
+		// users: db.get('users').value()//lấy dữ liệu từ database
+		User.find()
+		.then((user)=>{
+			res.render('users/index',{users: user})
+		})
+});
 //---------------------------phương thức req.query -------------------------
 app.get('/users/search', (req,res) => {
 	var name_search = req.query.name // lấy giá trị của key name trong query parameters gửi lên
-
-	var result = db.get('users').value().filter( (user) => {
+	// var result = db.get('users').value().
+	User.find().then((user)=>{
+		var result = user.filter(function(us){
+			return us.name.toLowerCase().indexOf(name_search.toLowerCase()) !== -1
+		});
+		res.render('users/index', {
+			users: result // render lại trang users/index với biến users bây giờ chỉ bao gồm các kết quả phù hợp
+			});
+		})
 		// tìm kiếm chuỗi name_search trong user name. 
-		// Lưu ý: Chuyển tên về cùng in thường hoặc cùng in hoa để không phân biệt hoa, thường khi tìm kiếm
-		return user.name.toLowerCase().indexOf(name_search.toLowerCase()) !== -1
-	})
-
-	res.render('users/index', {
-		users: result // render lại trang users/index với biến users bây giờ chỉ bao gồm các kết quả phù hợp
-	});
+		// Lưu ý: Chuyển tên về cùng in thường hoặc cùng in hoa để không phân biệt hoa, thường khi tìm kiếm	
 })
 //-------------------------------cookie-------------------------------------
 // app.get('/users/cookie',(req,res)=>{
@@ -68,7 +83,8 @@ app.get('/users/create',function(req,res,next){
 	res.render('users/create');  
 })
 
-app.post('/users/create', (req, res, next) => {
+app.post('/users/create', upload.single('avatar'),
+	(req, res, next) => {
 	// req.body.id= shortid.generate();
 	//xác thực người dùng 
 	var error=[];  
@@ -90,6 +106,7 @@ app.post('/users/create', (req, res, next) => {
 	} 
 	next();//chuyển tới hàm tiếp theo 
 	},(req, res) => {
+		req.body.avatar = req.file.path.split('/').slice(1).join('/');
 		db.get('users').push(req.body).write()//thêm phần tử vào database 
    		res.redirect('/users')//chuyển hướng trở lại trang trước 
 	}
@@ -130,19 +147,36 @@ app.get('/users/:id',(req,res)=>{
 })
 //--------------------- tạo trang -------------------
 app.get('/product',(req,res)=>{
-	var page = parseInt(req.query.page) ||1; 
-	var nextPage =page+1; 
-	var prePage = page-1;
-	var perPage = 8;
-	var start = (page-1)*perPage; 
-	var end = page*perPage;
-	res.render('users/product',{
-		products: db.get('product').value().slice(start,end),
-		prePage:prePage,
-		page:page,
-		nextPage:nextPage
+	// var page = parseInt(req.query.page) ||1; 
+	// var nextPage =page+1; 
+	// var prePage = page-1;
+	// var perPage = 8;
+	// var start = (page-1)*perPage; 
+	// var end = page*perPage;
+	// res.render('users/product',{
+	// 	products: db.get('product').value().slice(start,end),
+	// 	prePage:prePage,
+	// 	page:page,
+	// 	nextPage:nextPage
+	// })
+	Product.find().then(function(products){
+		res.render('users/product',{
+			products: products
+		})
 	})
 })
+//---------------------------Rest API--------------------------------
+app.get('/api/product',(req,res)=>{
+	Product.find().then(function(products){
+		res.json(products)
+	})
+})
+
+app.post('/api/product',async (req,res)=>{
+	var pro = await Product.create(req.body);
+	res.json(pro)
+})
+
 //---------------------------lắng nghe ở cổng, chạy trên terminal ------------
 app.listen(port, function(){
     console.log('Your app running on port '+ port);

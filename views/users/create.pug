@@ -3,7 +3,7 @@ block content
 	if errors
 		each error in errors
 			p= error
-	form(action="/users/create" method="POST")
+	form(action="/users/create" method="POST",enctype="multipart/form-data")
 		.form-group
 			label(id="name")
 			input(type="text", name="name", placeholder="Your name", value= values?values.name:"")
@@ -11,4 +11,6 @@ block content
 			input(type="text", placeholder="Your email address", name="email")
 			label(id="age")
 			input(type="text", placeholder="Your age", name="age")
+			label(id="Avatar")
+			input(type="file",name='avatar')
 			input(type="submit", class="btn btn-primary")
